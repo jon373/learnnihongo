@@ -1,7 +1,7 @@
 name: nihongo_app
 description: "A new Flutter project."
 
-version: 1.0.0+1
+version: 1.0.1
 
 
 environment:
@@ -15,11 +15,7 @@ dependencies:
   hive_flutter: ^1.1.0
   flip_card: ^0.7.0
   intl: ^0.20.2
-  shared_preferences: ^2.2.2
-  permission_handler: ^11.0.1
-  file_picker: ^8.0.0
-  path_provider: ^2.1.5
-  device_info_plus: ^11.3.0
+
 
 dev_dependencies:
   flutter_test:

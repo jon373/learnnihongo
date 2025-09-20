@@ -1,43 +1,70 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:nihongo_app/data/kanji_data.dart';
+import 'package:nihongo_app/data/N5_vocabs_data.dart';
 
-class KanjiQuizPage extends StatefulWidget {
-  final String level;
-  const KanjiQuizPage({super.key, required this.level});
+class VocabQuizPage extends StatefulWidget {
+  final String quizType; // nouns, verbs, adjectives, all
+  final String category;
+
+  const VocabQuizPage({
+    super.key,
+    required this.quizType,
+    required this.category,
+  });
 
   @override
-  State<KanjiQuizPage> createState() => _KanjiQuizPageState();
+  State<VocabQuizPage> createState() => _VocabQuizPageState();
 }
 
-class _KanjiQuizPageState extends State<KanjiQuizPage> {
-  late List<Map<String, dynamic>> kanjiList;
+class _VocabQuizPageState extends State<VocabQuizPage> {
+  late List<Map<String, dynamic>> quizList;
+  late Map<String, dynamic> currentQuestion;
   int currentIndex = 0;
   int score = 0;
   bool answered = false;
   String? selectedAnswer;
-  List<String> currentOptions = [];
+  final Random _random = Random();
 
   @override
   void initState() {
     super.initState();
-    _loadKanjiList();
-    _loadOptions();
+    _loadQuiz();
+    _loadQuestion();
   }
 
-  void _loadKanjiList() {
-    if (widget.level == "N5") {
-      kanjiList = List.from(n5KanjiQuiz); // connect to N5 quiz
-    } else if (widget.level == "N4") {
-      kanjiList = List.from(n4KanjiQuiz); // connect to N4 quiz
-    } else {
-      kanjiList = [...n5KanjiQuiz, ...n4KanjiQuiz]; // both levels
+  void _loadQuiz() {
+    switch (widget.quizType) {
+      case 'nouns':
+        quizList = List.from(n5NounsQuiz)..shuffle(_random);
+        break;
+      case 'verbs':
+        quizList = List.from(n5VerbsQuiz)..shuffle(_random);
+        break;
+      case 'adjectives':
+        quizList = [
+          ...List.from(n5iAdjectivesQuiz),
+          ...List.from(n5NaAdjectivesQuiz),
+        ]..shuffle(_random);
+        break;
+      case 'all':
+        quizList = List.from(n5AllVocabQuiz)..shuffle(_random);
+        break;
+      default:
+        quizList = [];
     }
-    kanjiList.shuffle(); // shuffle question order
   }
 
-  void _loadOptions() {
-    currentOptions = List<String>.from(kanjiList[currentIndex]['options']);
-    currentOptions.shuffle(); // always shuffle choices
+  void _loadQuestion() {
+    if (quizList.isEmpty) {
+      return;
+    }
+
+    currentQuestion = quizList[currentIndex];
+
+    // Shuffle options for this question
+    List<String> options = List.from(currentQuestion['options']);
+    options.shuffle(_random);
+    currentQuestion['options'] = options;
   }
 
   void _checkAnswer(String selected) {
@@ -46,18 +73,18 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
     setState(() {
       answered = true;
       selectedAnswer = selected;
-      if (selected == kanjiList[currentIndex]['answer']) {
+      if (selected == currentQuestion['answer']) {
         score++;
       }
     });
 
     Future.delayed(const Duration(seconds: 1), () {
-      if (currentIndex < kanjiList.length - 1) {
+      if (currentIndex < quizList.length - 1) {
         setState(() {
           currentIndex++;
           answered = false;
           selectedAnswer = null;
-          _loadOptions(); // reload & shuffle next question's options
+          _loadQuestion();
         });
       } else {
         _showResult();
@@ -81,59 +108,113 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
           ),
         ),
         title: Text(
-          "Quiz Finished",
+          "Quiz Completed!",
           style: TextStyle(
             color: theme.colorScheme.onBackground,
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: Text(
-          "Your score: $score / ${kanjiList.length}",
-          style: TextStyle(
-            fontSize: 18,
-            color: theme.colorScheme.onBackground,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Your score: $score / ${quizList.length}",
+              style: TextStyle(
+                fontSize: 18,
+                color: theme.colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Category: ${widget.category}",
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.colorScheme.onBackground.withOpacity(0.7),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context); // close dialog
-              Navigator.pop(context); // go back
+              Navigator.pop(context); // go back to selection
             },
             style: TextButton.styleFrom(
               foregroundColor: theme.colorScheme.primary,
             ),
-            child: const Text("OK"),
+            child: const Text("Finish"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // close dialog
+              _restartQuiz(); // restart same quiz
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.primary,
+            ),
+            child: const Text("Try Again"),
           ),
         ],
       ),
     );
   }
 
+  void _restartQuiz() {
+    setState(() {
+      // Reshuffle the entire quiz
+      quizList.shuffle(_random);
+      currentIndex = 0;
+      score = 0;
+      answered = false;
+      selectedAnswer = null;
+      _loadQuestion();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (kanjiList.isEmpty) {
+    if (quizList.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: Text("KANJI Quiz ${widget.level}"),
+          title: Text("${widget.category} Quiz"),
           backgroundColor: theme.colorScheme.primary,
           foregroundColor: theme.colorScheme.onPrimary,
         ),
         body: Center(
-          child: CircularProgressIndicator(
-            color: theme.colorScheme.primary,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 50, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                "No vocabulary available",
+                style: TextStyle(
+                  fontSize: 18,
+                  color: theme.colorScheme.onBackground,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                ),
+                child: const Text("Go Back"),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    var question = kanjiList[currentIndex];
-
     return Scaffold(
       appBar: AppBar(
-        title: Text("KANJI Quiz ${widget.level}"),
+        title: Text("${widget.category} Quiz"),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         centerTitle: true,
@@ -148,7 +229,7 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
             children: [
               // Progress bar
               LinearProgressIndicator(
-                value: (currentIndex + 1) / kanjiList.length,
+                value: (currentIndex + 1) / quizList.length,
                 backgroundColor: theme.colorScheme.surface.withOpacity(0.5),
                 color: theme.colorScheme.primary,
                 minHeight: 10,
@@ -157,7 +238,7 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
               const SizedBox(height: 20),
               Center(
                 child: Text(
-                  "Question ${currentIndex + 1} of ${kanjiList.length}",
+                  "Question ${currentIndex + 1} of ${quizList.length}",
                   style: TextStyle(
                     fontSize: 18,
                     color: theme.colorScheme.onBackground,
@@ -167,7 +248,7 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
               const SizedBox(height: 10),
               Center(
                 child: Text(
-                  "What is the reading/meaning of:",
+                  "What is the meaning of:",
                   style: TextStyle(
                     fontSize: 16,
                     color: theme.colorScheme.onBackground.withOpacity(0.7),
@@ -175,7 +256,7 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Kanji character in styled card
+              // Word card
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -198,22 +279,35 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
                       ],
                     ),
                   ),
-                  child: Center(
-                    child: Text(
-                      question['kanji'],
-                      style: TextStyle(
-                        fontSize: 60,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onBackground,
+                  child: Column(
+                    children: [
+                      Text(
+                        currentQuestion['word'],
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onBackground,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        currentQuestion['type'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color:
+                              theme.colorScheme.onBackground.withOpacity(0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               const SizedBox(height: 30),
               // Multiple choice buttons
-              ...currentOptions.map((opt) {
-                final isCorrect = opt == question['answer'];
+              ...(currentQuestion['options'] as List<String>).map((opt) {
+                final isCorrect = opt == currentQuestion['answer'];
                 final isSelected = opt == selectedAnswer;
 
                 Color btnColor = theme.colorScheme.primary;
@@ -245,7 +339,8 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
                     },
                     child: Text(
                       opt,
-                      style: const TextStyle(fontSize: 20),
+                      style: const TextStyle(fontSize: 18),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 );
@@ -253,7 +348,7 @@ class _KanjiQuizPageState extends State<KanjiQuizPage> {
               const SizedBox(height: 20),
               // Score text
               Text(
-                "Score: $score / ${kanjiList.length}",
+                "Score: $score / ${quizList.length}",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

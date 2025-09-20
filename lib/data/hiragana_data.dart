@@ -1,3 +1,7 @@
+import 'dart:math';
+
+final Random _random = Random();
+
 // Hiragana characters data
 List<Map<String, String>> hiraganaList = [
   // Basic Hiragana
@@ -133,3 +137,7 @@ List<Map<String, String>> hiraganaList = [
   {'character': 'ぴゅ', 'reading': 'pyu', 'meaning': 'pyu'},
   {'character': 'ぴょ', 'reading': 'pyo', 'meaning': 'pyo'},
 ];
+
+// Shuffle function
+List<Map<String, String>> getShuffledHiragana() =>
+    List.from(hiraganaList)..shuffle(_random);

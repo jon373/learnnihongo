@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nihongo_app/flashcards/create_flashcard.dart';
 import 'package:nihongo_app/data/kanji_data.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 class KanjiFlashcardPage extends StatefulWidget {
   final String level;
@@ -24,30 +21,16 @@ class _KanjiFlashcardPageState extends State<KanjiFlashcardPage> {
     _loadFlashcards();
   }
 
-  void _loadFlashcards() async {
+  void _loadFlashcards() {
     List<Map<String, String>> loadedCards = [];
 
+    // Load base kanji list based on level
     if (widget.level == "N5") {
-      loadedCards = n5KanjiList;
+      loadedCards = getShuffledN5Kanji();
     } else if (widget.level == "N4") {
-      loadedCards = n4KanjiList;
-    } else if (widget.level == "Custom") {
-      // Load custom flashcards from local storage
-      final prefs = await SharedPreferences.getInstance();
-      final String? customCardsJson = prefs.getString('customFlashcards');
-
-      if (customCardsJson != null) {
-        final List<dynamic> customCards = json.decode(customCardsJson);
-        loadedCards = customCards.map<Map<String, String>>((item) {
-          return {
-            'kanji': item['kanji'] ?? '',
-            'meaning': item['meaning'] ?? '',
-            'reading': item['reading'] ?? '',
-          };
-        }).toList();
-      }
+      loadedCards = getShuffledN4Kanji();
     } else {
-      loadedCards = [...n5KanjiList, ...n4KanjiList];
+      loadedCards = getShuffledAllKanji();
     }
 
     setState(() {
@@ -56,10 +39,22 @@ class _KanjiFlashcardPageState extends State<KanjiFlashcardPage> {
     });
   }
 
+  void _reshuffle() {
+    setState(() {
+      isLoading = true;
+      _loadFlashcards(); // This will get a newly shuffled list
+      currentIndex = 0;
+      showMeaning = false;
+    });
+  }
+
   void _nextCard() {
     setState(() {
       if (currentIndex < kanjiList.length - 1) {
         currentIndex++;
+      } else {
+        // Reached end, reshuffle and start over
+        _reshuffle();
       }
       showMeaning = false;
     });
@@ -82,105 +77,171 @@ class _KanjiFlashcardPageState extends State<KanjiFlashcardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            color: theme.colorScheme.primary,
+          ),
+        ),
       );
     }
 
     if (kanjiList.isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: Text("Flashcards - ${widget.level}"),
+          title: Text("${widget.level} Kanji Flashcards"),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: theme.colorScheme.onPrimary,
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.inbox, size: 64, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text(
-                "No flashcards found",
-                style: TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Create some flashcards first!",
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const CreateFlashcardPage()),
-                  );
-                },
-                child: const Text('Create Flashcard'),
-              ),
-            ],
+          child: Text(
+            "No flashcards available",
+            style: TextStyle(
+              fontSize: 18,
+              color: theme.colorScheme.onBackground,
+            ),
           ),
         ),
       );
     }
 
-    final current = kanjiList[currentIndex];
+    final currentCard = kanjiList[currentIndex];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Flashcards - ${widget.level}"),
+        title: Text("${widget.level} Kanji Flashcards"),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shuffle),
+            onPressed: _reshuffle,
+            tooltip: 'Shuffle Flashcards',
+          )
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: _flipCard,
-              child: Card(
-                elevation: 6,
-                margin: const EdgeInsets.all(16),
-                child: Container(
-                  height: 200,
-                  width: 300,
-                  alignment: Alignment.center,
-                  child: Text(
-                    showMeaning ? current['meaning']! : current['kanji']!,
-                    style: const TextStyle(
-                        fontSize: 32, fontWeight: FontWeight.bold),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: _flipCard,
+            child: Card(
+              elevation: 6,
+              margin: const EdgeInsets.all(20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: Container(
+                height: 250,
+                width: double.infinity,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.surface.withOpacity(0.9),
+                      theme.colorScheme.surface.withOpacity(0.7),
+                    ],
                   ),
                 ),
+                child: showMeaning
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            currentCard['meaning'] ?? '',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onBackground,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (currentCard['reading'] != null &&
+                              currentCard['reading']!.isNotEmpty)
+                            Text(
+                              "(${currentCard['reading']})",
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: theme.colorScheme.onBackground
+                                    .withOpacity(0.7),
+                              ),
+                            ),
+                        ],
+                      )
+                    : Text(
+                        currentCard['kanji'] ?? '',
+                        style: TextStyle(
+                          fontSize: 60,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onBackground,
+                        ),
+                      ),
               ),
             ),
-            if (!showMeaning &&
-                current['reading'] != null &&
-                current['reading']!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  current['reading']!,
-                  style: const TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          // Added "Tap to reveal" hint for Kanji
+          if (!showMeaning)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                "Tap to reveal meaning",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: theme.colorScheme.onBackground.withOpacity(0.6),
                 ),
               ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _previousCard,
-                  child: const Text("Previous"),
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _nextCard,
-                  child: const Text("Next"),
-                ),
-              ],
             ),
-            const SizedBox(height: 20),
-            Text("${currentIndex + 1} / ${kanjiList.length}"),
-          ],
-        ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ElevatedButton(
+                onPressed: _previousCard,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  minimumSize: const Size(120, 48),
+                ),
+                child: const Text("Previous"),
+              ),
+              ElevatedButton(
+                onPressed: _nextCard,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  minimumSize: const Size(120, 48),
+                ),
+                child: const Text("Next"),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "${currentIndex + 1} / ${kanjiList.length}",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.onBackground,
+            ),
+          ),
+        ],
       ),
     );
   }

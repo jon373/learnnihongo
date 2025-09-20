@@ -2,6 +2,24 @@
 
 import 'dart:math';
 
+// Add these functions to shuffle your kanji lists
+List<Map<String, String>> getShuffledN5Kanji() =>
+    List.from(n5KanjiList)..shuffle(_random);
+List<Map<String, String>> getShuffledN4Kanji() =>
+    List.from(n4KanjiList)..shuffle(_random);
+List<Map<String, String>> getShuffledAllKanji() {
+  return [
+    ...getShuffledN5Kanji(),
+    ...getShuffledN4Kanji(),
+  ]..shuffle(_random);
+}
+
+// Shuffled quiz versions
+List<Map<String, dynamic>> getShuffledN5KanjiQuiz() =>
+    List.from(n5KanjiQuiz)..shuffle(_random);
+List<Map<String, dynamic>> getShuffledN4KanjiQuiz() =>
+    List.from(n4KanjiQuiz)..shuffle(_random);
+
 final Random _random = Random();
 
 /// JLPT N5 Kanji Quiz

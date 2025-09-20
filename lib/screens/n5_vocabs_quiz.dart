@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:nihongo_app/kanji_quiz.dart';
+import 'package:nihongo_app/n5vocabs_page.dart';
 
-class KanjiSelectionPage extends StatelessWidget {
-  const KanjiSelectionPage({super.key});
+class VocabQuizSelectionPage extends StatelessWidget {
+  const VocabQuizSelectionPage({super.key});
 
   // Helper function to create letter icons
   Widget _buildLetterIcon(String letter,
@@ -28,7 +28,7 @@ class KanjiSelectionPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kanji Quiz'),
+        title: const Text('Vocabulary Quiz'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         centerTitle: true,
@@ -39,7 +39,7 @@ class KanjiSelectionPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Select Kanji Level',
+              'Select Vocabulary Category',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: theme.colorScheme.onBackground,
               ),
@@ -50,28 +50,40 @@ class KanjiSelectionPage extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildKanjiLevelCard(
+                    _buildVocabCategoryCard(
                       context,
-                      'Kanji N5',
+                      'Nouns Quiz',
                       theme.colorScheme.primary.withOpacity(0.1),
-                      _buildLetterIcon('5', color: theme.colorScheme.onPrimary),
-                      'N5',
+                      _buildLetterIcon('名', color: theme.colorScheme.onPrimary),
+                      'nouns',
+                      'Nouns',
                     ),
-                    const SizedBox(height: 12),
-                    _buildKanjiLevelCard(
+                    const SizedBox(height: 3),
+                    _buildVocabCategoryCard(
                       context,
-                      'Kanji N4',
+                      'Verbs Quiz',
                       theme.colorScheme.primary.withOpacity(0.15),
-                      _buildLetterIcon('4', color: theme.colorScheme.onPrimary),
-                      'N4',
+                      _buildLetterIcon('動', color: theme.colorScheme.onPrimary),
+                      'verbs',
+                      'Verbs',
                     ),
-                    const SizedBox(height: 12),
-                    _buildKanjiLevelCard(
+                    const SizedBox(height: 3),
+                    _buildVocabCategoryCard(
                       context,
-                      'All N5 + N4',
+                      'Adjectives Quiz',
                       theme.colorScheme.primary.withOpacity(0.2),
+                      _buildLetterIcon('形', color: theme.colorScheme.onPrimary),
+                      'adjectives',
+                      'Adjectives',
+                    ),
+                    const SizedBox(height: 3),
+                    _buildVocabCategoryCard(
+                      context,
+                      'All Vocabulary Quiz',
+                      theme.colorScheme.primary.withOpacity(0.25),
                       _buildLetterIcon('全', color: theme.colorScheme.onPrimary),
-                      'All',
+                      'all',
+                      'All Vocabulary',
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -84,12 +96,13 @@ class KanjiSelectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildKanjiLevelCard(
+  Widget _buildVocabCategoryCard(
     BuildContext context,
     String title,
     Color color,
-    Widget icon, // Changed from IconData to Widget
-    String level,
+    Widget icon,
+    String quizType,
+    String category,
   ) {
     final theme = Theme.of(context);
 
@@ -108,7 +121,8 @@ class KanjiSelectionPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => KanjiQuizPage(level: level),
+              builder: (context) =>
+                  VocabQuizPage(quizType: quizType, category: category),
             ),
           );
         },

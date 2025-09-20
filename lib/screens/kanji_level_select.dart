@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:nihongo_app/kanji_quiz.dart';
+import '../flashcards/kanji_flashcard_page.dart';
 
-class KanjiSelectionPage extends StatelessWidget {
-  const KanjiSelectionPage({super.key});
+class KanjiLevelSelect extends StatelessWidget {
+  const KanjiLevelSelect({super.key});
 
   // Helper function to create letter icons
   Widget _buildLetterIcon(String letter,
@@ -28,7 +28,7 @@ class KanjiSelectionPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kanji Quiz'),
+        title: const Text('Select Kanji Level'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         centerTitle: true,
@@ -50,28 +50,20 @@ class KanjiSelectionPage extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildKanjiLevelCard(
+                    _buildLevelCard(
                       context,
-                      'Kanji N5',
+                      'N5 Kanji Flashcards',
                       theme.colorScheme.primary.withOpacity(0.1),
                       _buildLetterIcon('5', color: theme.colorScheme.onPrimary),
-                      'N5',
+                      "N5",
                     ),
                     const SizedBox(height: 12),
-                    _buildKanjiLevelCard(
+                    _buildLevelCard(
                       context,
-                      'Kanji N4',
+                      'N4 Kanji Flashcards',
                       theme.colorScheme.primary.withOpacity(0.15),
                       _buildLetterIcon('4', color: theme.colorScheme.onPrimary),
-                      'N4',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildKanjiLevelCard(
-                      context,
-                      'All N5 + N4',
-                      theme.colorScheme.primary.withOpacity(0.2),
-                      _buildLetterIcon('全', color: theme.colorScheme.onPrimary),
-                      'All',
+                      "N4",
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -84,7 +76,7 @@ class KanjiSelectionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildKanjiLevelCard(
+  Widget _buildLevelCard(
     BuildContext context,
     String title,
     Color color,
@@ -108,7 +100,7 @@ class KanjiSelectionPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => KanjiQuizPage(level: level),
+              builder: (context) => KanjiFlashcardPage(level: level),
             ),
           );
         },

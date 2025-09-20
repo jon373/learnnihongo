@@ -1,3 +1,7 @@
+import 'dart:math';
+
+final Random _random = Random();
+
 // Katakana characters data
 List<Map<String, String>> katakanaList = [
   // Basic Katakana
@@ -159,3 +163,7 @@ List<Map<String, String>> katakanaList = [
   {'character': 'フェ', 'reading': 'fe', 'meaning': 'fe'},
   {'character': 'フォ', 'reading': 'fo', 'meaning': 'fo'},
 ];
+
+// Shuffle function
+List<Map<String, String>> getShuffledKatakana() =>
+    List.from(katakanaList)..shuffle(_random);

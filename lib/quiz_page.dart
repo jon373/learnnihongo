@@ -160,18 +160,43 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _showResult() {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Quiz Completed'),
-        content: Text('Your score: $score / ${widget.totalQuestions}'),
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: theme.colorScheme.primary.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        title: Text(
+          'Quiz Completed',
+          style: TextStyle(
+            color: theme.colorScheme.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Your score: $score / ${widget.totalQuestions}',
+          style: TextStyle(
+            fontSize: 18,
+            color: theme.colorScheme.onBackground,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.primary,
+            ),
             child: const Text('OK'),
           ),
         ],
@@ -179,18 +204,22 @@ class _QuizPageState extends State<QuizPage> {
     );
   }
 
-  Color _getButtonColor(String choice) {
-    if (!isAnswered) return Colors.blue;
+  Color _getButtonColor(String choice, ThemeData theme) {
+    if (!isAnswered) return theme.colorScheme.primary;
     if (choice == correctAnswer) return Colors.green;
     if (choice == selectedAnswer && choice != correctAnswer) return Colors.red;
-    return Colors.blue;
+    return theme.colorScheme.primary;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.quizType[0].toUpperCase()} Quiz'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         centerTitle: true,
       ),
       body: Padding(
@@ -201,14 +230,18 @@ class _QuizPageState extends State<QuizPage> {
           children: [
             LinearProgressIndicator(
               value: (questionCount + 1) / widget.totalQuestions,
-              backgroundColor: Colors.grey[200],
-              color: Colors.blue,
+              backgroundColor: theme.colorScheme.surface.withOpacity(0.5),
+              color: theme.colorScheme.primary,
               minHeight: 10,
+              borderRadius: BorderRadius.circular(5),
             ),
             const SizedBox(height: 20),
             Text(
               'Question ${questionCount + 1} of ${widget.totalQuestions}',
-              style: const TextStyle(fontSize: 18),
+              style: TextStyle(
+                fontSize: 18,
+                color: theme.colorScheme.onBackground,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -216,25 +249,51 @@ class _QuizPageState extends State<QuizPage> {
               'What is the reading/meaning of:',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.grey[700],
+                color: theme.colorScheme.onBackground.withOpacity(0.7),
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            Text(
-              currentQuestion,
-              style: const TextStyle(
-                fontSize: 72,
-                fontWeight: FontWeight.bold,
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  width: 1,
+                ),
               ),
-              textAlign: TextAlign.center,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.surface.withOpacity(0.9),
+                      theme.colorScheme.surface.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+                child: Text(
+                  currentQuestion,
+                  style: TextStyle(
+                    fontSize: 72,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onBackground,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
             const SizedBox(height: 40),
             ...choices.map((choice) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _getButtonColor(choice),
+                      backgroundColor: _getButtonColor(choice, theme),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -250,7 +309,10 @@ class _QuizPageState extends State<QuizPage> {
             const SizedBox(height: 20),
             Text(
               'Score: $score / $questionCount',
-              style: const TextStyle(fontSize: 18),
+              style: TextStyle(
+                fontSize: 18,
+                color: theme.colorScheme.onBackground,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
