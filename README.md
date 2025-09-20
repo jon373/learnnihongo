@@ -1,10 +1,10 @@
-# nihongo_app
+# NihonGo
 
-A new Flutter project.
+Just a simple hardcoded type of App to learn some vocabs, kanji etc.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+For a user who is learning a Nihongo.
 
 A few resources to get you started if this is your first Flutter project:
 
